@@ -1,21 +1,21 @@
-#include <windows.h>
+ï»¿#include <windows.h>
 #include <stdio.h>
 
-//È«¾Ö±äÁ¿ÉùÃ÷
+//å…¨å±€å˜é‡å£°æ˜
 HINSTANCE hInst;
 HBITMAP bg;
-HBITMAP girl[7];     //ÉùÃ÷Î»Í¼Êı×éÓÃÀ´´¢´æ¸÷ÕÅÈËÎïÎ»Í¼
-HDC		mdc;     //ÉùÃ÷"hdc"ÎªÈ«¾Ö±äÁ¿£¬ÓÃÀ´´æ´¢´°¿ÚDC£¬ÕâÑùºóÃæµÄ³ÌĞò½øĞĞ¶¯»­»æÍ¼»á±È½Ï·½±ã
-int		num;         //"num"±äÁ¿ÓÃÀ´¼ÇÂ¼Ä¿Ç°ÏÔÊ¾µÄÍ¼ºÅ
+HBITMAP girl[7];     //å£°æ˜ä½å›¾æ•°ç»„ç”¨æ¥å‚¨å­˜å„å¼ äººç‰©ä½å›¾
+HDC		mdc;     //å£°æ˜"hdc"ä¸ºå…¨å±€å˜é‡ï¼Œç”¨æ¥å­˜å‚¨çª—å£DCï¼Œè¿™æ ·åé¢çš„ç¨‹åºè¿›è¡ŒåŠ¨ç”»ç»˜å›¾ä¼šæ¯”è¾ƒæ–¹ä¾¿
+int		num;         //"num"å˜é‡ç”¨æ¥è®°å½•ç›®å‰æ˜¾ç¤ºçš„å›¾å·
 
-//È«¾Öº¯ÊıµÄÉùÃ÷
+//å…¨å±€å‡½æ•°çš„å£°æ˜
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 void MyPaintBG(HDC hdc);
 void				MyPaint(HDC hdc);
-
-//**WinMainº¯Êı£¬³ÌĞòÈë¿Úµãº¯Êı*********************************
+HWND hw;
+//**WinMainå‡½æ•°ï¼Œç¨‹åºå…¥å£ç‚¹å‡½æ•°*********************************
 int   APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
@@ -25,23 +25,43 @@ int   APIENTRY WinMain(HINSTANCE hInstance,
 
 	MyRegisterClass(hInstance);
 
-	//ÅĞ¶Ï
+	//åˆ¤æ–­
 	if (!InitInstance (hInstance, nCmdShow)) 
 	{
 		return FALSE;
 	}
-
-	//ÏûÏ¢Ñ­»·
-	while (GetMessage(&msg, NULL, 0, 0)) 
+	DWORD dwlast = 0;
+	//æ¶ˆæ¯å¾ªç¯
+	while (1)
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		if (PeekMessage(&msg, NULL, 0, 0,PM_REMOVE)) 
+		{
+			if (msg.message == WM_QUIT)
+			{
+				return 1;
+			}
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else
+		{
+			if (GetTickCount() - dwlast >= 1000 / 30)
+			{
+				HDC hdc = GetDC(hw);
+				MyPaint(hdc);
+				ReleaseDC(hw,hdc);
+				dwlast = GetTickCount();
+			}
+			else
+				Sleep(1);
+		}
 	}
+	
 	
 	return msg.wParam;
 }
 
-//****Éè¼ÆÒ»¸ö´°¿ÚÀà£¬ÀàËÆÌî¿ÕÌâ£¬Ê¹ÓÃ´°¿Ú½á¹¹Ìå*************************
+//****è®¾è®¡ä¸€ä¸ªçª—å£ç±»ï¼Œç±»ä¼¼å¡«ç©ºé¢˜ï¼Œä½¿ç”¨çª—å£ç»“æ„ä½“*************************
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
 	WNDCLASSEX wcex;
@@ -63,9 +83,9 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wcex);
 }
 
-//****³õÊ¼»¯º¯Êı************************************
-// 1.´ÓÎÄ¼ş¼ÓÔØÎ»Í¼
-// 2.½¨Á¢¶¨Ê±Æ÷
+//****åˆå§‹åŒ–å‡½æ•°************************************
+// 1.ä»æ–‡ä»¶åŠ è½½ä½å›¾
+// 2.å»ºç«‹å®šæ—¶å™¨
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	HWND hWnd;
@@ -74,7 +94,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	hInst = hInstance;
 
-	hWnd = CreateWindow("canvas", "¶¯»­´°¿Ú" , WS_OVERLAPPED   |   WS_SYSMENU   |WS_MINIMIZEBOX,
+	hWnd = CreateWindow("canvas", "åŠ¨ç”»çª—å£" , WS_OVERLAPPED   |   WS_SYSMENU   |WS_MINIMIZEBOX,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
 
 	if (!hWnd)
@@ -85,32 +105,32 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	MoveWindow(hWnd,10,10,432,648,true);
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
-
+	hw = hWnd;
 	HDC hdc = GetDC(hWnd);
 	mdc = CreateCompatibleDC(hdc);
 
 	bg = (HBITMAP)LoadImage(NULL,"b/bg.bmp",IMAGE_BITMAP,432,648,LR_LOADFROMFILE);
-	//ÔØÈë¸÷¸öÈËÎïÎ»Í¼
+	//è½½å…¥å„ä¸ªäººç‰©ä½å›¾
 	for(i=0;i<7;i++)      
 	{
 		sprintf(filename,"b/1girl%d.bmp",i);
 		girl[i] = (HBITMAP)LoadImage(NULL,filename,IMAGE_BITMAP,640,240,LR_LOADFROMFILE);
 	}
 	
-	num = 0;                     //ÉèÖÃ³õÊ¼µÄÏÔÊ¾Í¼ºÅÎª"0"
-	SetTimer(hWnd,1,40,NULL);   //½¨Á¢¶¨Ê±Æ÷£¬¼ä¸ô0.5Ãë·¢³öÏûÏ¢
+	num = 0;                     //è®¾ç½®åˆå§‹çš„æ˜¾ç¤ºå›¾å·ä¸º"0"
+//	SetTimer(hWnd,1,40,NULL);   //å»ºç«‹å®šæ—¶å™¨ï¼Œé—´éš”0.5ç§’å‘å‡ºæ¶ˆæ¯
 	MyPaintBG(hdc);
 	MyPaint(hdc);
 	ReleaseDC(hWnd,hdc);
 	return TRUE;
 }
 
-//****×Ô¶¨Òå»æÍ¼º¯Êı*********************************
-// °´ÕÕÍ¼ºÅË³Ğò½øĞĞ´°¿ÚÌùÍ¼
+//****è‡ªå®šä¹‰ç»˜å›¾å‡½æ•°*********************************
+// æŒ‰ç…§å›¾å·é¡ºåºè¿›è¡Œçª—å£è´´å›¾
 int ix =10,iy = 400;
 void MyPaint(HDC hdc)
 {
-	if(num == 7)               //ÅĞ¶ÏÊÇ·ñ³¬¹ı×î´óÍ¼ºÅ£¬Èô³¬¹ı×î´óÍ¼ºÅ¡°6¡±£¬Ôò½«ÏÔÊ¾Í¼ºÅÖØÉèÎª"0"¡£
+	if(num == 7)               //åˆ¤æ–­æ˜¯å¦è¶…è¿‡æœ€å¤§å›¾å·ï¼Œè‹¥è¶…è¿‡æœ€å¤§å›¾å·â€œ6â€ï¼Œåˆ™å°†æ˜¾ç¤ºå›¾å·é‡è®¾ä¸º"0"ã€‚
 	{
 		srand(GetTickCount());
 		ix = rand() % 432;
@@ -118,22 +138,22 @@ void MyPaint(HDC hdc)
 		num = 0;               
 	}
 	SelectObject(mdc,bg);
-	BitBlt(hdc,0,0,432,648,mdc,0,0,SRCCOPY);         //ÒÔÄ¿Ç°Í¼ºÅ½øĞĞ´°¿ÚÌùÍ¼
+	BitBlt(hdc,0,0,432,648,mdc,0,0,SRCCOPY);         //ä»¥ç›®å‰å›¾å·è¿›è¡Œçª—å£è´´å›¾
 	SelectObject(mdc,girl[num]);
-	BitBlt(hdc,ix,iy,320,240,mdc,320,0,SRCAND);         //ÒÔÄ¿Ç°Í¼ºÅ½øĞĞ´°¿ÚÌùÍ¼
-	BitBlt(hdc,ix,iy,320,240,mdc,0,0,SRCPAINT);         //ÒÔÄ¿Ç°Í¼ºÅ½øĞĞ´°¿ÚÌùÍ¼
+	BitBlt(hdc,ix,iy,320,240,mdc,320,0,SRCAND);         //ä»¥ç›®å‰å›¾å·è¿›è¡Œçª—å£è´´å›¾
+	BitBlt(hdc,ix,iy,320,240,mdc,0,0,SRCPAINT);         //ä»¥ç›®å‰å›¾å·è¿›è¡Œçª—å£è´´å›¾
 
-	num++;                    //½«¡°num¡±Öµ¼Ó1£¬ÎªÏÂÒ»´ÎÒªÏÔÊ¾µÄÍ¼ºÅ
+	num++;                    //å°†â€œnumâ€å€¼åŠ 1ï¼Œä¸ºä¸‹ä¸€æ¬¡è¦æ˜¾ç¤ºçš„å›¾å·
 }
 void MyPaintBG(HDC hdc)
 {
 	SelectObject(mdc,bg);
-	BitBlt(hdc,0,0,432,648,mdc,0,0,SRCCOPY);         //ÒÔÄ¿Ç°Í¼ºÅ½øĞĞ´°¿ÚÌùÍ¼
+	BitBlt(hdc,0,0,432,648,mdc,0,0,SRCCOPY);         //ä»¥ç›®å‰å›¾å·è¿›è¡Œçª—å£è´´å›¾
 }
 
-//****ÏûÏ¢´¦Àíº¯Êı***********************************
-// 1.¼ÓÈë´¦ÀíWM_TIMERÏûÏ¢
-// 2.ÔÚÏûÏ¢½áÊøÊ±É¾³ı¶¨Ê±Æ÷
+//****æ¶ˆæ¯å¤„ç†å‡½æ•°***********************************
+// 1.åŠ å…¥å¤„ç†WM_TIMERæ¶ˆæ¯
+// 2.åœ¨æ¶ˆæ¯ç»“æŸæ—¶åˆ é™¤å®šæ—¶å™¨
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
@@ -146,11 +166,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			MyPaintBG(hpdc);
 			EndPaint(hWnd,&ps);
 			break;
-		case WM_TIMER:						//Ê±¼äÏûÏ¢
-			MyPaint(htdc);                   //ÔÚÏûÏ¢Ñ­»·ÖĞ¼ÓÈë´¦ÀíWM_TIMERÏûÏ¢£¬µ±½ÓÊÕµ½´ËÏûÏ¢Ê±±ãµ÷ÓÃMyPaint£¨£©º¯Êı½øĞĞ´°¿Ú»æÍ¼
-			break;
-		case WM_DESTROY:					//´°¿Ú½áÊøÏûÏ¢
-			KillTimer(hWnd,1);             //´°¿Ú½áÊøÊ±£¬É¾³ıËù½¨Á¢µÄ¶¨Ê±Æ÷     
+// 		case WM_TIMER:						//æ—¶é—´æ¶ˆæ¯
+// 			MyPaint(htdc);                   //åœ¨æ¶ˆæ¯å¾ªç¯ä¸­åŠ å…¥å¤„ç†WM_TIMERæ¶ˆæ¯ï¼Œå½“æ¥æ”¶åˆ°æ­¤æ¶ˆæ¯æ—¶ä¾¿è°ƒç”¨MyPaintï¼ˆï¼‰å‡½æ•°è¿›è¡Œçª—å£ç»˜å›¾
+// 			break;
+		case WM_DESTROY:					//çª—å£ç»“æŸæ¶ˆæ¯
+			KillTimer(hWnd,1);             //çª—å£ç»“æŸæ—¶ï¼Œåˆ é™¤æ‰€å»ºç«‹çš„å®šæ—¶å™¨     
 			DeleteDC(mdc);
 
 //			ReleaseDC(hWnd,hdc);
@@ -159,7 +179,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DeleteObject(bg);
 			PostQuitMessage(0);
 			break;
-		default:							//ÆäËûÏûÏ¢
+		default:							//å…¶ä»–æ¶ˆæ¯
 			return DefWindowProc(hWnd, message, wParam, lParam);
    }
 	ReleaseDC(hWnd,htdc);
